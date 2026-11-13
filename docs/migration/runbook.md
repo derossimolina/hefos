@@ -39,7 +39,7 @@ Pronto quando: o inventário termina com `PENDENTES: 0` e todos os itens abaixo 
 - [ ] **Desligar a Inicialização Rápida e a hibernação** (`powercfg /h off` num terminal de administrador). Sem isso, o NTFS do D: fica "sujo" e o Linux monta só leitura ou recusa.
 - [ ] Pendrive do Arch: `Get-FileHash E:\archlinux-x86_64.iso` igual ao `sha256sums.txt` oficial. ✓ feito em 2026-11-13 (2026.11.01). Se baixar um ISO mais novo, conferir de novo.
 - [ ] Pendrive de recuperação do Windows 10: o ISO já está no Ventoy. Conferir que o Ventoy dá boot nele (só até a primeira tela, sem instalar).
-- [ ] Testar o boot do Arch pelo Ventoy (ver 1.1 e 1.2) **sem instalar**: confirma que o pendrive funciona e que o Wi-Fi é reconhecido (`iwctl device list`).
+- [x] Testar o boot do Arch pelo Ventoy (ver 1.1 e 1.2) **sem instalar**: confirma que o pendrive funciona e que o Wi-Fi é reconhecido (`iwctl device list`). ✓ feito pelo usuário antes de 2026-11-13.
 - [ ] Rodar o inventário de novo: `PENDENTES: 0`. **Só então marcar o Dia D.**
 
 ### Exceções (repos que vão só para o disco externo)
