@@ -37,7 +37,22 @@ Pronto quando: o inventário termina com `PENDENTES: 0` e todos os itens abaixo 
 
 | Repositório | Motivo | Copiado em |
 |---|---|---|
-| | | |
+| `D:\Projetos Código\sheepdog` | `.git` quebrado (sem objetos); só `public/favicon.svg`. Remote original: `jeronimo-molina/sheepdog-site` | |
+
+### Arquivos fora do git (vão no backup do D:, não no GitHub)
+
+| Onde | O quê | Motivo |
+|---|---|---|
+| `D:\projects\tiktok\public\v*` | Vídeos brutos (~800 MB) | Ignorados pelo `.gitignore` do repo |
+| `D:\projects\caxias3d\_cache_tse\` | Zips do TSE (~650 MB) | Acima do limite de 100 MB do GitHub; podem ser baixados de novo do TSE |
+| `D:\HugoBlog\themes\{risotto,shibui,terminal}` | Temas de terceiros não usados | Clonáveis de novo; ajustes locais em `_patches/` |
+
+### Resolvido em 2026-11-13
+
+- `D:\Obsidian`: a história local não tem nenhum commit em comum com `obsidian_new/main` (vault arquivado). Os 167 commits locais foram para a branch `arquivo-windows-2026-11-13` do mesmo repo, sem sobrescrever a `main`.
+- `D:\HugoBlog`: o remote antigo (`derossimolina.github.io`) não existe mais. Publicado no repo privado `derossimolina/hugoblog`.
+- `contexto-graficos` e `tiktok`: novos repos privados no GitHub.
+- `eleicoes_pib`: `.claude/` e `output/raiox_nacional.log` ignorados localmente (`.git/info/exclude`).
 
 ---
 
