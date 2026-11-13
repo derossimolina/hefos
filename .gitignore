@@ -1,0 +1,16 @@
+# Segredos: nunca commitar
+.env
+*.env
+id_*
+!id_*.pub
+*.pem
+.aws/
+credentials
+
+# Logs e relatórios com caminhos pessoais
+*.log
+inventory-report*.md
+
+# Lixo de sistema
+.DS_Store
+Thumbs.db
