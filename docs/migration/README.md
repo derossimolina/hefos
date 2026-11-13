@@ -42,3 +42,16 @@ Invoke-Pester tests/migration -Output Detailed
 ```
 
 Os arquivos `.ps1`/`.psm1` são salvos em UTF-8 **com BOM** e CRLF: sem o BOM, o PowerShell 5.1 lê os acentos errado.
+
+## Cópia para o disco externo
+
+`backup-to-external.ps1` copia com `robocopy` o D: inteiro, `~\Downloads`, `~\OneDrive` e os itens sensíveis para `<disco>\hefos-backup\`. Veja o passo a passo no [runbook](runbook.md#etapa-0-backup-no-windows).
+
+| Parâmetro | Uso |
+|---|---|
+| `-Dest` | Raiz do disco externo, ex.: `F:\` (obrigatório) |
+| `-DryRun` | Só simula (`robocopy /L`): mostra quanto seria copiado e não grava nada |
+| `-Verify` | Depois da cópia, confere que nenhum arquivo ficou faltando |
+| `-IncludeRegenerable` | Copia também `node_modules`, `.venv`, `venv`, `__pycache__`, `target`, `.next`, `dist` |
+
+Códigos de saída: `0` ok, `1` falha ou arquivos faltando (rode de novo: retoma de onde parou), `2` pré-requisito (destino inexistente ou no mesmo disco físico do C:/D:).

@@ -23,8 +23,16 @@ Pronto quando: o inventário termina com `PENDENTES: 0` e todos os itens abaixo 
 
 - [ ] Rodar o inventário: `powershell -NoProfile -File docs/migration/windows-inventory.ps1` (ver [README](README.md)).
 - [ ] Resolver cada repo pendente: commit + push, criar remote no GitHub (`gh repo create --private --source . --push`) ou anotar abaixo, em "Exceções", que ele vai só para o disco externo.
-- [ ] Copiar o vault do Obsidian (`D:\new_obsidian`) e os documentos para o **disco externo** e para a **nuvem**. Conferir abrindo três arquivos aleatórios de cada cópia.
-- [ ] Copiar `~/.ssh`, `~/.aws`, `~/.claude` e `~/.gitconfig` para o disco externo, numa pasta separada e **fora de qualquer nuvem pública**.
+- [ ] **Cópia para o disco externo** com o script (D: inteiro, `~\Downloads`, `~\OneDrive` e os itens sensíveis `~\.ssh`, `~\.aws`, `~\.claude`, `~\.gitconfig` numa pasta `sensiveis` separada). Precisa de um disco externo com **~220 GB livres** (medido em 2026-11-13: 203,5 GB do D: + ~7 GB do C:). Formate-o em **NTFS** ou **exFAT**: o FAT32 não aceita arquivos acima de 4 GB.
+  ```powershell
+  # 1. simulação: confere letras e espaço, não copia nada
+  powershell -NoProfile -File docs/migration/backup-to-external.ps1 -Dest F:\ -DryRun
+  # 2. cópia de verdade + conferência (horas, num HD USB). Pode interromper e rodar de novo: retoma de onde parou
+  powershell -NoProfile -File docs/migration/backup-to-external.ps1 -Dest F:\ -Verify
+  ```
+  O script recusa um destino no mesmo disco do C: ou do D:. Ele pula pastas que se recriam (`node_modules`, `.venv`, `target`...). Para incluí-las, use `-IncludeRegenerable`. Os logs ficam em `F:\hefos-backup\logs`. O disco externo **não pode ir para nenhuma nuvem pública** porque contém as chaves SSH e AWS.
+- [ ] Conferir a cópia abrindo três arquivos aleatórios do D:, do vault (`D:\new_obsidian`) e do OneDrive no disco externo.
+- [ ] Copiar o vault do Obsidian e os documentos também para a **nuvem** (o vault já está no GitHub em `notas`/`obsidian_new`; os documentos do OneDrive já estão no OneDrive).
 - [ ] Ligar a sincronização de conta no Chrome e no Brave. Conferir senhas e favoritos em outro dispositivo ou em `passwords.google.com`.
 - [ ] Anotar a senha do Wi-Fi e os dados de 2FA (apps autenticadores e códigos de recuperação) fora do computador.
 - [ ] **Desligar a Inicialização Rápida e a hibernação** (`powercfg /h off` num terminal de administrador). Sem isso, o NTFS do D: fica "sujo" e o Linux monta só leitura ou recusa.
