@@ -21,7 +21,7 @@ Parâmetros opcionais:
 
 Códigos de saída: `0` sem pendências, `1` com pendências, `2` erro de pré-requisito (git fora do PATH ou nenhuma raiz existente).
 
-A busca não entra em `node_modules`, `.venv`, `venv`, `target`, `.git`, na lixeira, em junções/links nem em repositórios aninhados.
+A busca não entra em `node_modules`, `.venv`, `venv`, `target`, `.git`, `AppData` (caches de ferramentas), na lixeira, em junções/links nem em repositórios aninhados.
 
 ## Seções do relatório
 

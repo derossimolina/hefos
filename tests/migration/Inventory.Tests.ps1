@@ -23,6 +23,7 @@ Describe 'Find-GitRepos' {
     $root = Join-Path $TestDrive 'scan'
     $repoComAcento     = New-Repo (Join-Path $root 'J de Rossi Molina/projeto ção')
     $repoEmNodeModules = New-Repo (Join-Path $root 'app/node_modules/pkg')
+    $repoEmAppData     = New-Repo (Join-Path $root 'AppData/Local/cache')
     $repoPai           = New-Repo (Join-Path $root 'pai')
     $aninhado          = New-Repo (Join-Path $root 'pai/sub/filho')
     $found = @(Find-GitRepos -Roots $root)
@@ -32,6 +33,9 @@ Describe 'Find-GitRepos' {
   }
   It 'não desce em node_modules' {
     $found | Should -Not -Contain $repoEmNodeModules
+  }
+  It 'não desce em AppData' {
+    $found | Should -Not -Contain $repoEmAppData
   }
   It 'não lista repo aninhado dentro de outro repo' {
     $found | Should -Contain $repoPai

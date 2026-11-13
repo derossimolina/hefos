@@ -3,7 +3,8 @@
 # Diretórios onde a varredura nunca entra (árvores enormes ou de sistema).
 $script:SkipDirs = @(
   'node_modules', '.venv', 'venv', 'target', '.git',
-  '$RECYCLE.BIN', 'System Volume Information'
+  '$RECYCLE.BIN', 'System Volume Information',
+  'AppData'   # caches de ferramentas (uv, hermes...), não são projetos do usuário
 )
 
 function Invoke-Git {
