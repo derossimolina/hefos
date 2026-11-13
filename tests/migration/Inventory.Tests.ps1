@@ -86,3 +86,72 @@ Describe 'Get-GitRepoStatus' {
     $s.Pending | Should -BeTrue
   }
 }
+
+Describe 'Get-SensitiveItems' {
+  It 'marca caminho inexistente sem erro' {
+    $r = Get-SensitiveItems -Paths @{ x = "$TestDrive/nao-existe" }
+    $r.Name | Should -Be 'x'
+    $r.Exists | Should -BeFalse
+    $r.SizeMB | Should -Be 0
+  }
+  It 'soma o tamanho de diretório existente' {
+    $d = Join-Path $TestDrive 'sens'
+    New-Item -ItemType Directory -Force -Path $d | Out-Null
+    [IO.File]::WriteAllBytes((Join-Path $d 'f.bin'), (New-Object byte[] 200000))
+    $r = Get-SensitiveItems -Paths @{ s = $d }
+    $r.Exists | Should -BeTrue
+    $r.SizeMB | Should -BeGreaterThan 0
+  }
+}
+
+Describe 'Get-DriveLayout' {
+  It 'devolve as propriedades esperadas' {
+    $l = Get-DriveLayout
+    $l.PSObject.Properties.Name | Should -Contain 'DExists'
+    $l.PSObject.Properties.Name | Should -Contain 'DIsSeparateDisk'
+    $l.PSObject.Properties.Name | Should -Contain 'CDiskModel'
+    $l.PSObject.Properties.Name | Should -Contain 'DDiskSizeGB'
+    $l.DExists | Should -BeOfType [bool]
+  }
+}
+
+Describe 'Format-InventoryReport' {
+  BeforeAll {
+    $pendente = [pscustomobject]@{ Path = 'D:\p\a'; Branch = 'main'; Uncommitted = 0; Unpushed = $null; NoUpstream = $true; HasRemote = $false; Pending = $true }
+    $ok       = [pscustomobject]@{ Path = 'D:\p\b'; Branch = 'main'; Uncommitted = 0; Unpushed = 0; NoUpstream = $false; HasRemote = $true; Pending = $false }
+    $drv = [pscustomobject]@{ DExists = $true; DIsSeparateDisk = $true; CDiskModel = 'SSD'; DDiskModel = 'HD'; CDiskSizeGB = 111.8; DDiskSizeGB = 931.5 }
+    $txt = Format-InventoryReport -Repos @($pendente, $ok) -Drives $drv -Items @()
+  }
+  It 'conta pendentes de repos e termina com PENDENTES: n' {
+    $txt | Should -Match 'PENDENTES: 1$'
+    $txt | Should -Match '## Repositórios pendentes'
+    $txt | Should -Match '## Repositórios ok'
+    $txt | Should -Match '## Discos'
+    $txt | Should -Match '## Itens para backup manual'
+  }
+  It 'mostra NoUpstream como "sem upstream", não como 0' {
+    $txt | Should -Match 'sem upstream'
+  }
+  It 'diz que D: é disco separado' {
+    $txt | Should -Match 'disco físico separado'
+  }
+}
+
+Describe 'windows-inventory.ps1' {
+  BeforeAll {
+    $script = "$PSScriptRoot/../../docs/migration/windows-inventory.ps1"
+    $ps = (Get-Process -Id $PID).Path
+    $fixtureComPendente = Join-Path $TestDrive 'fx'
+    New-Repo (Join-Path $fixtureComPendente 'semremote') | Out-Null
+  }
+  It 'sai com 2 e mensagem clara quando nenhuma raiz existe' {
+    $out = & $ps -NoProfile -File $script -Roots "$TestDrive/nada" -OutFile "$TestDrive/r0.md" -SkipSensitive 2>&1
+    $LASTEXITCODE | Should -Be 2
+    ($out -join "`n") | Should -Match 'Nenhuma raiz'
+  }
+  It 'sai com 1 quando há repo pendente' {
+    & $ps -NoProfile -File $script -Roots $fixtureComPendente -OutFile "$TestDrive/r.md" -SkipSensitive | Out-Null
+    $LASTEXITCODE | Should -Be 1
+    "$TestDrive/r.md" | Should -Exist
+  }
+}
