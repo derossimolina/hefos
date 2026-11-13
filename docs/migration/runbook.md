@@ -21,9 +21,11 @@ O D: é um disco separado e sobrevive ao Dia D, mas **não conta como backup del
 
 Pronto quando: o inventário termina com `PENDENTES: 0` e todos os itens abaixo estão marcados.
 
-- [ ] Rodar o inventário: `powershell -NoProfile -File docs/migration/windows-inventory.ps1` (ver [README](README.md)).
-- [ ] Resolver cada repo pendente: commit + push, criar remote no GitHub (`gh repo create --private --source . --push`) ou anotar abaixo, em "Exceções", que ele vai só para o disco externo.
-- [ ] **Cópia para o disco externo** com o script (D: inteiro, `~\Downloads`, `~\OneDrive` e os itens sensíveis `~\.ssh`, `~\.aws`, `~\.claude`, `~\.gitconfig` numa pasta `sensiveis` separada). Precisa de um disco externo com **~220 GB livres** (medido em 2026-11-13: 203,5 GB do D: + ~7 GB do C:). Formate-o em **NTFS** ou **exFAT**: o FAT32 não aceita arquivos acima de 4 GB.
+Legenda: `[x]` feito · `[~]` feito de forma adaptada (ver nota) · `[ ]` pendente.
+
+- [x] Rodar o inventário: `powershell -NoProfile -File docs/migration/windows-inventory.ps1` (ver [README](README.md)).
+- [x] Resolver cada repo pendente: commit + push, criar remote no GitHub (`gh repo create --private --source . --push`) ou anotar abaixo, em "Exceções", que ele vai só para o disco externo.
+- [~] **Cópia para o disco externo** com o script (D: inteiro, `~\Downloads`, `~\OneDrive` e os itens sensíveis `~\.ssh`, `~\.aws`, `~\.claude`, `~\.gitconfig` numa pasta `sensiveis` separada). Precisa de um disco externo com **~220 GB livres** (medido em 2026-11-13: 203,5 GB do D: + ~7 GB do C:). Formate-o em **NTFS** ou **exFAT**: o FAT32 não aceita arquivos acima de 4 GB.
   ```powershell
   # 1. simulação: confere letras e espaço, não copia nada
   powershell -NoProfile -File docs/migration/backup-to-external.ps1 -Dest F:\ -DryRun
@@ -32,15 +34,15 @@ Pronto quando: o inventário termina com `PENDENTES: 0` e todos os itens abaixo 
   ```
   O script recusa um destino no mesmo disco do C: ou do D:. Ele pula pastas que se recriam (`node_modules`, `.venv`, `target`...). Para incluí-las, use `-IncludeRegenerable`. Os logs ficam em `F:\hefos-backup\logs`. O disco externo **não pode ir para nenhuma nuvem pública** porque contém as chaves SSH e AWS.
   > **2026-11-13: sem disco externo por enquanto.** Os itens sensíveis (`.ssh`, `.aws`, `.claude`, `.gitconfig`) foram copiados com robocopy para `D:\hefos-backup\sensiveis` e conferidos (mesma contagem de arquivos e tamanho; hash do `.gitconfig` igual). `~\Downloads` (62 arquivos, 3,4 GB) foi copiado para `D:\hefos-backup\C-home\Downloads` e conferido. O D: sobrevive ao Dia D, mas hoje é a **única cópia** desses itens e de tudo o que não está no GitHub ou no OneDrive. Se o HD falhar, perde-se tudo. Quando houver um disco externo, rodar o script acima.
-- [ ] Conferir a cópia abrindo três arquivos aleatórios do D:, do vault (`D:\new_obsidian`) e do OneDrive no disco externo.
-- [ ] Copiar o vault do Obsidian e os documentos também para a **nuvem** (o vault já está no GitHub em `notas`/`obsidian_new`; os documentos do OneDrive já estão no OneDrive).
-- [ ] Ligar a sincronização de conta no Chrome e no Brave. Conferir senhas e favoritos em outro dispositivo ou em `passwords.google.com`.
+- [~] Conferir a cópia abrindo três arquivos aleatórios do D:, do vault (`D:\new_obsidian`) e do OneDrive no disco externo. Sem disco externo: as cópias em `D:hefos-backup` foram conferidas por contagem de arquivos e tamanho.
+- [x] Copiar o vault do Obsidian e os documentos também para a **nuvem** (o vault já está no GitHub em `notas`/`obsidian_new`; os documentos do OneDrive já estão no OneDrive).
+- [x] Ligar a sincronização de conta no Chrome e no Brave. Conferir senhas e favoritos em outro dispositivo ou em `passwords.google.com`. ✓ Chrome sincronizado em 2026-11-13 (o Brave não está instalado no Windows).
 - [ ] Anotar a senha do Wi-Fi e os dados de 2FA (apps autenticadores e códigos de recuperação) fora do computador.
-- [ ] **Desligar a Inicialização Rápida e a hibernação** (`powercfg /h off` num terminal de administrador). Sem isso, o NTFS do D: fica "sujo" e o Linux monta só leitura ou recusa.
-- [ ] Pendrive do Arch: `Get-FileHash E:\archlinux-x86_64.iso` igual ao `sha256sums.txt` oficial. ✓ feito em 2026-11-13 (2026.11.01). Se baixar um ISO mais novo, conferir de novo.
-- [ ] Pendrive de recuperação do Windows 10: o ISO já está no Ventoy. Conferir que o Ventoy dá boot nele (só até a primeira tela, sem instalar).
+- [x] **Desligar a Inicialização Rápida e a hibernação** (`powercfg /h off` num terminal de administrador). Sem isso, o NTFS do D: fica "sujo" e o Linux monta só leitura ou recusa. ✓ conferido em 2026-11-13: `HibernateEnabled=0`, sem `hiberfil.sys`.
+- [x] Pendrive do Arch: `Get-FileHash E:\archlinux-x86_64.iso` igual ao `sha256sums.txt` oficial. ✓ feito em 2026-11-13 (2026.11.01). Se baixar um ISO mais novo, conferir de novo.
+- [x] Pendrive de recuperação do Windows 10: o ISO já está no Ventoy. Conferir que o Ventoy dá boot nele (só até a primeira tela, sem instalar). ✓ conferido pelo usuário em 2026-11-13.
 - [x] Testar o boot do Arch pelo Ventoy (ver 1.1 e 1.2) **sem instalar**: confirma que o pendrive funciona e que o Wi-Fi é reconhecido (`iwctl device list`). ✓ feito pelo usuário antes de 2026-11-13.
-- [ ] Rodar o inventário de novo: `PENDENTES: 0`. **Só então marcar o Dia D.**
+- [x] Rodar o inventário de novo: `PENDENTES: 0`. **Só então marcar o Dia D.** ✓ 2026-11-13: `PENDENTES: 1`, o `sheepdog`, justificado em "Exceções".
 
 ### Exceções (repos que vão só para o disco externo)
 
