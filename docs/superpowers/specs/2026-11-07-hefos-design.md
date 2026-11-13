@@ -3,6 +3,7 @@
 - **Data:** 2026-11-07
 - **Autor:** Jerônimo de Rossi (derossimolina)
 - **Status:** aprovado em brainstorming, aguardando revisão da spec escrita
+- **Revisão 2026-11-13:** o HefOS passa a ser **distribuído** para máquinas antigas, não só para a máquina do autor. Piso de hardware novo (abaixo) e decisões em aberto na seção 12
 - **Repositório:** https://github.com/derossimolina/hefos
 
 ---
@@ -11,20 +12,22 @@
 
 HefOS é um ambiente baseado em **Arch Linux + Hyprland** para laptops e desktops antigos, com **visual TUI** em toda a interface, aplicações comuns de trabalho e **IA integrada** (Hermes Agent + Claude Code + Claude Desktop).
 
-### Hardware alvo
+O objetivo é **distribuir** o HefOS: ele precisa funcionar em qualquer máquina que atenda o piso abaixo, de preferência nas mais antigas. "Funciona" quer dizer testado numa matriz de máquinas definida (seção 9), não só na máquina do autor.
 
-| Item | Mínimo |
-|---|---|
-| Ano | 2017 em diante |
-| CPU | Intel/AMD x86_64 fraca e antiga (com AES-NI) |
-| GPU | apenas integrada (Intel iGPU / AMD APU) |
-| RAM | 8 GB |
-| Disco | 120 GB (HD ou SSD) |
-| Firmware | UEFI |
+### Hardware alvo (piso)
+
+| Item | Mínimo | Observação |
+|---|---|---|
+| Ano | **Intel a partir de 2013 (Haswell) · AMD a partir de 2012 (GCN)** | É o piso prático do Hyprland. Ele exige GPU com OpenGL ES 3; abaixo disso a interface fica lenta ou não abre |
+| CPU | Intel/AMD x86_64 (com AES-NI) | Todas as CPUs do piso têm AES-NI, que deixa o LUKS rápido |
+| GPU | Integrada Intel (Gen 7.5 / Haswell ou mais nova) ou AMD (GCN, APU ou dedicada) | **NVIDIA: sem suporte** (seção 11) |
+| RAM | **4 GB** (8 GB recomendado) | zram é obrigatório. Desktop ocioso < 1,2 GB (seção 10) |
+| Disco | **64 GB** (HD ou SSD) | |
+| Firmware | **UEFI ou BIOS legado** | O Limine dá boot nos dois |
 
 ### Contexto e restrição principal
 
-O autor vai substituir o Windows 10 da sua única máquina pelo HefOS **enquanto continua trabalhando nos seus projetos**. Portanto:
+O autor vai substituir o Windows 10 da sua única máquina (i3-6006U, HD 520, 12 GB, SSD de 120 GB, 2016) pelo HefOS **enquanto continua trabalhando nos seus projetos**. Essa máquina é a primeira da matriz de testes. Para ela vale:
 
 1. Nunca pode ficar sem um sistema utilizável por mais de um dia.
 2. Toda mudança tem que ser reversível (snapshots Btrfs).
@@ -45,6 +48,8 @@ Ver seção 10.
 | Integração de IA | **Integrada ao desktop**: atalho, skills de sistema, widget na barra e notificações |
 | Substituições | spotify-tui → **spotify_player** · neofetch → **fastfetch** (alias `neofetch`) · pywal → **matugen** · nmtui + impala com **NetworkManager usando backend iwd** |
 | Apps extras | **yay**, **mpv + imv**, **Flatpak + Flathub**, **Docker** |
+| Público (revisão 2026-11-13) | **Distribuição** para máquinas antigas, não só a máquina do autor |
+| Piso de hardware (revisão 2026-11-13) | Intel 2013+ / AMD 2012+, 4 GB, 64 GB, UEFI ou BIOS, sem NVIDIA |
 
 > **As seções 3 a 7 descrevem o alvo, não um contrato.** Se na prática um componente se comportar de outro jeito, a decisão é revista, registrada no journal (seção 8) e esta spec é atualizada.
 
@@ -60,9 +65,9 @@ As fontes de pacote abaixo são as **prováveis**. O nome exato é confirmado no
 |---|---|---|
 | Sistema de arquivos | Btrfs (subvolumes `@`, `@home`, `@snapshots`, `@log`, `@pkg`), compressão zstd | archinstall |
 | Criptografia | LUKS2 (opcional, padrão ligado em laptop) | archinstall |
-| Bootloader | **Limine** + `limine-snapper-sync` (snapshots no menu de boot). Fallback: GRUB + grub-btrfs | extra / AUR |
+| Bootloader | **Limine** (UEFI e BIOS legado) + `limine-snapper-sync` (snapshots no menu de boot). Fallback: GRUB + grub-btrfs | extra / AUR |
 | Snapshots | snapper + snap-pac (snapshot a cada transação pacman) | extra |
-| Memória | zram-generator (sem swap em disco) | extra |
+| Memória | zram-generator, **obrigatório** por causa do piso de 4 GB (sem swap em disco) | extra |
 | Áudio | pipewire, pipewire-pulse, pipewire-alsa, wireplumber | extra |
 | Rede | NetworkManager com backend **iwd** · nmtui · **impala** | extra |
 | Bluetooth | bluez, bluez-utils · **bluetui** | extra |
@@ -70,7 +75,7 @@ As fontes de pacote abaixo são as **prováveis**. O nome exato é confirmado no
 | Apps extras | flatpak (+ Flathub), docker, docker-compose | extra |
 | Login | **greetd + tuigreet** | extra |
 | Sessão | **uwsm** | extra |
-| Vídeo | mesa, vulkan-intel / vulkan-radeon, intel-media-driver / libva-mesa-driver (detectado) | extra |
+| Vídeo | mesa, vulkan-intel / vulkan-radeon, intel-media-driver (Broadwell+) ou libva-intel-driver (Haswell) / libva-mesa-driver, detectados pelo `lib/hw.sh`. Vulkan só onde a GPU suporta | extra |
 
 ### 2.2 Ecossistema Hyprland
 
@@ -128,8 +133,9 @@ hefos/
 ├── install.sh            # (etapa 5) ponto de entrada no live ISO
 ├── lib/                  # ui.sh (wrappers gum no estilo TUI), log.sh, pkg.sh, hw.sh
 ├── installer/            # (etapa 5) fase 1, roda no live ISO
-│   ├── 00-preflight.sh   # UEFI, internet, RAM >= 8 GB, disco >= 120 GB, CPU Intel/AMD
-│   ├── 10-disk.sh        # partições, LUKS opcional, Btrfs + subvolumes
+│   ├── 00-preflight.sh   # UEFI ou BIOS, internet, RAM >= 4 GB, disco >= 64 GB, CPU Intel/AMD,
+│   │                     # GPU no piso (Intel Gen 7.5+ / AMD GCN); NVIDIA ou GPU abaixo do piso: aviso claro e para
+│   ├── 10-disk.sh        # partições GPT (ESP no UEFI, partição BIOS boot no legado), LUKS opcional, Btrfs + subvolumes
 │   ├── 20-base.sh        # pacstrap, locale pt_BR.UTF-8, fuso, usuário, Limine
 │   └── 30-handoff.sh     # copia o repo para o sistema novo e agenda a fase 2
 ├── modules/              # fase 2, roda no sistema instalado; cada módulo é idempotente
@@ -338,7 +344,7 @@ Abre automaticamente no primeiro login (Ghostty em tela cheia). É desenhado com
 | **2. Sobrevivência** | À mão + journal | yay → Ghostty → git + gh → Chrome → Node → Claude Code → VS Code → Obsidian, um de cada vez. Depois restaura os dados e clona os repos | **Você consegue trabalhar nos seus projetos** |
 | **3. Demais etapas** | À mão + journal | (a) rollback: snap-pac, Limine + limine-snapper-sync, zram · (b) visual TUI: greetd/tuigreet, uwsm, AGS, Walker, mako, matugen, fonte, ecossistema Hypr · (c) CLI · (d) dev · (e) apps · (f) IA · (g) setup TUI | Cada item tem journal com resultado ✓ |
 | **4. Roteirização** | Repo | Os journals viram módulos, listas de pacotes e configs. Comandos `hefos`. **A partir daqui vale a regra "tudo pelo repo"**: nenhuma mudança direto no sistema; tudo entra no repo e é aplicado com `hefos apply` | `hefos apply --all` roda limpo na máquina atual (idempotência) |
-| **5. Reprodutibilidade** | VM / USB externo | `install.sh` + `installer/` substituem o archinstall. Teste do zero: fases 1 e 2 numa VM (VirtualBox, EFI); fluxo completo num SSD externo USB | Sistema reconstruído do zero passa no checklist da seção 10 |
+| **5. Reprodutibilidade** | VM / USB externo | `install.sh` + `installer/` substituem o archinstall. Teste do zero: fases 1 e 2 na matriz de VMs (seção 9); fluxo completo num SSD externo USB e nas máquinas reais da matriz | Sistema reconstruído do zero passa no checklist da seção 10 |
 | **6. ISO** | v2 | archiso embalando o instalador | Fora do escopo da v1 |
 
 ### Plano B
@@ -362,8 +368,32 @@ Abre automaticamente no primeiro login (Ghostty em tela cheia). É desenhado com
 
 - Etapas 1 a 3: critério de "funciona" de cada componente, registrado no journal.
 - Etapa 4: `hefos apply --all` duas vezes seguidas sem erro e sem mudanças na segunda.
-- Etapa 5: VM (fases 1 e 2) e SSD externo (fluxo completo).
+- Etapa 5: matriz de VMs (fases 1 e 2) e SSD externo (fluxo completo).
 - `hefos doctor` limpo.
+
+### Matriz de compatibilidade (revisão 2026-11-13)
+
+Como o HefOS é distribuído, "funciona" vale para uma matriz, não para uma máquina.
+
+**VMs** (QEMU/OVMF; no CI quando der, senão à mão a cada release):
+
+| Firmware | RAM | Disco | O que valida |
+|---|---|---|---|
+| UEFI | 4 GB | 64 GB | Instalador, piso de RAM e disco |
+| BIOS legado | 4 GB | 64 GB | Instalador e Limine no BIOS |
+| UEFI | 8 GB | 120 GB | Configuração recomendada |
+
+As VMs não validam o desktop: sem aceleração de vídeo, o Hyprland não representa uma máquina real.
+
+**Máquinas reais** (pelo menos uma de cada linha antes da v1):
+
+| Perfil | Exemplo | Status |
+|---|---|---|
+| Intel no piso (Haswell, 2013–2014) | — | a conseguir |
+| Intel intermediária (Skylake, 2015–2017) | Máquina do autor: i3-6006U, HD 520, 12 GB, SATA em modo RAID/RST | disponível |
+| AMD APU (GCN) | — | a conseguir |
+
+O `hefos doctor` deve gerar um relatório de compatibilidade (CPU, GPU, RAM, firmware, resultado de cada verificação) que voluntários possam anexar a uma issue.
 
 ---
 
@@ -371,12 +401,13 @@ Abre automaticamente no primeiro login (Ghostty em tela cheia). É desenhado com
 
 1. A instalação do zero (etapa 5) termina sem intervenção além das perguntas iniciais.
 2. Todos os componentes da seção 2 funcionam.
-3. Desktop ocioso usando **menos de 1,2 GB de RAM**; boot até o tuigreet em **menos de 20s** no SSD.
+3. Desktop ocioso usando **menos de 1,2 GB de RAM** (inclusive numa máquina de 4 GB); boot até o tuigreet em **menos de 20s** no SSD.
 4. `Super+A` abre o Hermes respondendo com o modelo configurado no `hefos-setup`.
 5. Um update quebrado é desfeito escolhendo um snapshot no menu de boot.
 6. `hefos update` e `hefos apply --resume` funcionam.
-7. Sistema completo instalado deixa **70 GB ou mais livres** num disco de 120 GB.
+7. Sistema completo instalado ocupa **no máximo 30 GB**, deixando 34 GB ou mais livres num disco de 64 GB.
 8. `hefos doctor` passa sem erros.
+9. A instalação passa em todas as linhas da matriz de VMs e em pelo menos uma máquina real de cada perfil (seção 9).
 
 ---
 
@@ -385,5 +416,23 @@ Abre automaticamente no primeiro login (Ghostty em tela cheia). É desenhado com
 - ISO própria (archiso): v2.
 - Setup inicial reescrito em Go/Bubble Tea: v2, se o gum ficar limitado.
 - Hermes como daemon, gateway e modelos locais.
-- Dual boot, suporte a BIOS legado, GPUs dedicadas NVIDIA.
+- Dual boot.
+- GPUs NVIDIA (dedicadas ou híbridas): o Hyprland funciona mal com elas, sobretudo nas antigas. O preflight avisa e para.
+- Máquinas abaixo do piso (Intel antes de Haswell, AMD antes de GCN): exigiriam outro compositor (ex.: Sway) e uma segunda trilha de testes.
 - LibreOffice (pode entrar via Flatpak quando precisar).
+
+---
+
+## 12. Decisões em aberto (revisão 2026-11-13)
+
+A mudança para distribuição deixou estas perguntas para decidir, uma de cada vez. Cada decisão atualiza esta spec e o plano.
+
+| # | Pergunta | Proposta inicial |
+|---|---|---|
+| 1 | A ISO com modo live sobe da v2 para a v1? Quem baixa precisa testar o hardware antes de apagar o próprio sistema | Sim: v1 = ISO live + instalador |
+| 2 | Uma edição só, ou leve (4 GB) e completa (8 GB)? Chrome, VS Code, Claude Desktop e Docker pesam em 4 GB | Uma edição base enxuta; os apps pesados viram módulos opcionais no `hefos-setup` |
+| 3 | Onde desenvolver sem apagar o Windows do autor? | SSD externo USB na máquina do autor; VMs para o instalador |
+| 4 | Locale e idioma: só pt-BR ou também inglês? | Perguntar no instalador; documentação em pt-BR primeiro |
+| 5 | O que da configuração pessoal do autor (Hermes, AWS, Obsidian CLI, lightsailctl) fica no HefOS distribuído? | Base genérica; o que é pessoal vira módulo opcional ou fica fora |
+
+Enquanto essas decisões não forem tomadas, o plano das etapas 0 a 3 e o runbook continuam valendo **só para a máquina do autor**.
