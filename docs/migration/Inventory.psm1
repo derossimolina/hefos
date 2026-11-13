@@ -179,7 +179,7 @@ function Format-InventoryReport {
     $lines.Add("- D: $($Drives.DDiskModel) ($($Drives.DDiskSizeGB) GB) — $kind")
   }
   if (($Drives.PSObject.Properties.Name -contains 'CDiskBusType') -and $Drives.CDiskBusType -eq 'RAID') {
-    $lines.Add('- **Atenção:** o controlador está em modo RAID (Intel RST). Mude para AHCI na BIOS antes do Dia D (ver runbook).')
+    $lines.Add('- **Atenção:** o controlador está em modo RAID (Intel RST). Com discos SATA o Linux costuma funcionar assim; se o instalador não vir o disco, troque para AHCI (ver runbook, 1.1).')
   }
   $lines.Add('')
 

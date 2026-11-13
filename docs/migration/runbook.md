@@ -10,7 +10,7 @@ Spec: [§8 Estratégia de construção e migração](../superpowers/specs/2026-1
 | Firmware | UEFI |
 | Disco 0 (C:) | **Patriot Burst Elite 120GB** (111,8 GB, GPT). **Alvo do Dia D: será apagado** |
 | Disco 1 (D:, "Backup") | **WDC WD10SPZX** (931,5 GB, MBR, NTFS). **Não tocar.** Fica intacto e é montado no Arch |
-| Controlador | **Modo RAID (Intel RST)**: precisa virar **AHCI** na BIOS no Dia D (ver 1.1) |
+| Controlador | Modo RAID (Intel RST). Uma instalação anterior do Arch funcionou sem mudar para AHCI (ver 1.1) |
 | Pendrive | SanDisk Cruzer Fit 8 GB com **Ventoy**: `archlinux-x86_64.iso` (2026.11.01, SHA256 conferido em 2026-11-13) e `Win10_22H2_BrazilianPortuguese_x64v1.iso` |
 
 O D: é um disco separado e sobrevive ao Dia D, mas **não conta como backup dele mesmo**: o que está no D: também precisa estar no disco externo e na nuvem.
@@ -74,7 +74,7 @@ Reserve um dia inteiro. Tenha o celular à mão para consultar este runbook (ele
 ### 1.1 BIOS/UEFI
 
 1. Entrar no setup da BIOS (F2, Del ou Esc, depende do fabricante).
-2. **SATA Mode / Storage: RAID (Intel RST) → AHCI.** Sem isso, o instalador pode não ver o SSD. Depois dessa troca, o Windows **para de dar boot** até você voltar para RAID. Isso é esperado: se o Dia D for abortado antes do passo 1.4, volte para RAID e o Windows funciona como antes.
+2. **SATA Mode / Storage: deixar como está (RAID/Intel RST).** Os dois discos são SATA, e o driver `ahci` do Linux funciona com o controlador Intel em modo RAID quando não há volume RAID montado. Uma instalação anterior do Arch nesta mesma máquina deu boot sem mexer nisso. **Só se** o `lsblk` do passo 1.2.5 não mostrar o Patriot é que se troca para **AHCI**. Depois dessa troca o Windows para de dar boot até voltar para RAID.
 3. **Secure Boot: desligado** (o ISO do Arch não é assinado).
 4. Boot mode: UEFI (sem CSM/Legacy).
 5. Salvar e sair dando boot pelo pendrive (menu de boot: F12, F9 ou Esc).
